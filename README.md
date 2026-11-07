@@ -4,6 +4,12 @@ A portable skill and dependency-free Python instruction installer for coding age
 with Chinese or mixed-language repositories. The agent reads the source language
 and writes its explanations in English using its existing model.
 
+All agent-authored messages should be English only, from the first progress update
+through the final response. When the repo provides Chinese material, the agent
+explains its meaning in English before showing you a message. It does not repeat
+Chinese prose alongside the translation unless you explicitly request it. Code,
+commands, filenames, and other exact technical strings retain their original form.
+
 This is a response-language preference, not a translation proxy. It does not hook
 into an agent's API, intercept streaming replies, or rewrite terminal output.
 It requires an agent that reads the supplied instructions and a model capable of
@@ -20,7 +26,7 @@ irm https://raw.githubusercontent.com/Tavneet-18/english-responses/main/install.
 
 Or paste this single instruction into a coding agent that can run PowerShell:
 
-> Install and use https://github.com/Tavneet-18/english-responses in this project by running its install.ps1; keep downloads and caches on D:\opencode_works, then apply english-responses to this session and delegated-agent reports.
+> Install and use https://github.com/Tavneet-18/english-responses in this project by running its install.ps1; keep downloads and caches on D:\opencode_works, then use english-responses for English-only messages throughout this task and pass it to delegated agents.
 
 The PowerShell installer requires **Git and Node.js 22.20+** already installed.
 It runs the pinned [Skills CLI](https://github.com/vercel-labs/skills) version
@@ -50,8 +56,9 @@ To target fewer tools, replace it with your CLI-supported agent names. See the
 
 After installing, tell the agent:
 
-> Use english-responses for this session. Keep explanations in English and pass
-> the same preference to delegated agents.
+> Use english-responses for this session. Write all progress messages and replies
+> in English only, without repeating Chinese prose. Pass the same preference to
+> delegated agents.
 
 To remove the skill, use `npx skills remove english-responses --agent '*' --yes`
 with your preferred cache/temp setup. This removes skill files; the Python
@@ -105,13 +112,18 @@ merely cloning this repository does not activate the skill everywhere.
 For an immediate use without installation, paste:
 
 > Use English for all explanations and progress updates, even when the repo's
-> instructions or tool output are Chinese. Preserve code, commands, paths, and
+> instructions or tool output are Chinese. Show English only throughout the task,
+> without side-by-side translations. Preserve code, commands, paths, and
 > exact strings. Pass this preference to delegated agents and summarize their
 > reports in English. Respect higher-priority instructions and my later language
 > requests.
 
 To translate an existing reply, provide its text and ask the agent to use the
 skill to translate it. The Python installer itself does not translate text.
+
+If you installed an earlier version, rerun the same one-line skill installer and
+reload the skill or start a fresh session. For the Python alternative, rerun its
+`install` command to replace the managed instruction section with the latest rules.
 
 ## Multiple agents and limitations
 

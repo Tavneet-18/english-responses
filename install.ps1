@@ -67,7 +67,7 @@ try {
     }
     Write-Host ''
     Write-Host 'Installed. Reload skills or start a fresh agent session in this project.'
-    Write-Host 'Ask: Use english-responses for this session and pass it to delegated agents.'
+    Write-Host 'Ask: Use english-responses for English-only messages throughout this task and pass it to delegated agents.'
 } finally {
     if ($pushedLocation) { Pop-Location }
     foreach ($key in $previous.Keys) {
