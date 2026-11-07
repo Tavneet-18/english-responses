@@ -52,3 +52,6 @@ Assert-EnvironmentRestored
 if ((Get-Location).Path -ne $locationBefore) { throw 'Failure changed working directory.' }
 Write-Output 'Bootstrap integration passed: installed content, failure handling, environment and working-directory restoration.'
 Write-Output "Logs: $testRoot"
+# The expected CLI failure above leaves LASTEXITCODE nonzero. Report the test
+# result explicitly so CI does not mistake that intentional failure for ours.
+exit 0
