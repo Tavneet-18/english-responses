@@ -3,9 +3,10 @@ $ErrorActionPreference = 'Stop'
 $repoPath = Split-Path -Parent $PSScriptRoot
 $testRoot = Join-Path $repoPath ('.tmp/bootstrap-' + [guid]::NewGuid().ToString('N'))
 $projectPath = Join-Path $testRoot 'project'
+$multiAgentProject = Join-Path $testRoot 'multi-agent-project'
 $emptySource = Join-Path $testRoot 'empty-source'
 $failureProject = Join-Path $testRoot 'failure-project'
-foreach ($directory in @($projectPath, $emptySource, $failureProject)) {
+foreach ($directory in @($projectPath, $multiAgentProject, $emptySource, $failureProject)) {
     $null = New-Item -ItemType Directory -Force -Path $directory
 }
 $savedEnv = @{}
@@ -31,13 +32,25 @@ $locationBefore = (Get-Location).Path
 Assert-EnvironmentRestored
 if ((Get-Location).Path -ne $locationBefore) { throw 'Working directory changed.' }
 $expected = (Get-FileHash -LiteralPath (Join-Path $repoPath 'skills/english-responses/SKILL.md')).Hash
-foreach ($relative in @('.agents/skills/english-responses/SKILL.md', '.claude/skills/english-responses/SKILL.md', '.roo/skills/english-responses/SKILL.md')) {
+foreach ($relative in @('.agents/skills/english-responses/SKILL.md')) {
     if ((Get-FileHash -LiteralPath (Join-Path $projectPath $relative)).Hash -ne $expected) {
         throw "Installed skill content differs: $relative"
     }
 }
+if (@(Get-ChildItem -LiteralPath $projectPath -Directory -Force | Where-Object Name -ne '.agents').Count -ne 0) {
+    throw 'Default installation created extra agent folders.'
+}
 if (-not (Test-Path -LiteralPath (Join-Path $projectPath 'skills-lock.json'))) {
     throw 'Project skill lock was not created.'
+}
+
+# Agent-specific folders are created only when explicitly requested.
+& $installer -Project $multiAgentProject -CacheRoot $cachePath -Source $repoPath -Agent @('universal', 'claude-code', 'roo') *> (Join-Path $testRoot 'multi-agent.log')
+Assert-EnvironmentRestored
+foreach ($relative in @('.claude/skills/english-responses/SKILL.md', '.roo/skills/english-responses/SKILL.md')) {
+    if ((Get-FileHash -LiteralPath (Join-Path $multiAgentProject $relative)).Hash -ne $expected) {
+        throw "Explicit agent installation differs: $relative"
+    }
 }
 
 # A source with no skills must fail, while still restoring the caller's state.
@@ -50,7 +63,7 @@ try {
 if (-not $failureCaught) { throw 'Empty skill source unexpectedly succeeded.' }
 Assert-EnvironmentRestored
 if ((Get-Location).Path -ne $locationBefore) { throw 'Failure changed working directory.' }
-Write-Output 'Bootstrap integration passed: installed content, failure handling, environment and working-directory restoration.'
+Write-Output 'Bootstrap integration passed: compact default, explicit agent targets, failure handling, environment and working-directory restoration.'
 Write-Output "Logs: $testRoot"
 # The expected CLI failure above leaves LASTEXITCODE nonzero. Report the test
 # result explicitly so CI does not mistake that intentional failure for ours.

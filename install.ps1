@@ -1,13 +1,23 @@
-# Install English Responses into the current project for all Skills CLI agents.
+# Install English Responses into a shared project skill folder by default.
 # PowerShell 5.1+; requires Git and Node.js 22.20+ (including npx).
 [CmdletBinding()]
 param(
     [string]$Project = (Get-Location).Path,
     [string]$CacheRoot,
-    [string]$Source = 'Tavneet-18/english-responses'
+    [string]$Source = 'Tavneet-18/english-responses',
+    [string[]]$Agent = @('universal')
 )
 
 $ErrorActionPreference = 'Stop'
+# Running the one-liner in the projects parent should not scatter skill folders
+# among unrelated projects. Use the dedicated English Responses folder instead.
+$workspaceRoot = 'D:\opencode_works'
+$englishRepoPath = Join-Path $workspaceRoot 'english response repo'
+if (-not $PSBoundParameters.ContainsKey('Project') -and
+    [System.IO.Path]::GetFullPath($Project).TrimEnd([char[]]'\/') -eq $workspaceRoot) {
+    $null = New-Item -ItemType Directory -Force -Path $englishRepoPath
+    $Project = $englishRepoPath
+}
 $projectPath = (Resolve-Path -LiteralPath $Project -ErrorAction Stop).Path
 if (-not (Test-Path -LiteralPath $projectPath -PathType Container)) {
     throw 'Project must be an existing directory.'
@@ -24,7 +34,7 @@ if ($LASTEXITCODE -ne 0 -or [version]$nodeVersion -lt [version]'22.20.0') {
 
 if (-not $CacheRoot) {
     if (Test-Path -LiteralPath 'D:\opencode_works' -PathType Container) {
-        $CacheRoot = 'D:\opencode_works\.english-responses-tools'
+        $CacheRoot = Join-Path $englishRepoPath '.english-responses-tools'
     } else {
         $CacheRoot = Join-Path $projectPath '.english-responses-tools'
     }
@@ -60,7 +70,9 @@ try {
     $pushedLocation = $true
     Write-Host "Installing English Responses into $projectPath"
     Write-Host "Downloads, temporary files, and CLI state: $cachePath"
-    & $npxCommand.Source --yes --cache $npmCache skills@1.7.6 add $Source --skill english-responses --agent '*' --yes --copy
+    $cliArguments = @('--yes', '--cache', $npmCache, 'skills@1.7.6', 'add', $Source,
+        '--skill', 'english-responses', '--agent') + $Agent + @('--yes', '--copy')
+    & $npxCommand.Source @cliArguments
     if ($LASTEXITCODE -ne 0) { throw "Skills CLI failed with exit code $LASTEXITCODE." }
     if (-not (Test-Path -LiteralPath (Join-Path $projectPath '.agents/skills/english-responses/SKILL.md'))) {
         throw 'Skills CLI did not create the expected skill file.'

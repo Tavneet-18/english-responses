@@ -30,28 +30,40 @@ Or paste this single instruction into a coding agent that can run PowerShell:
 
 The PowerShell installer requires **Git and Node.js 22.20+** already installed.
 It runs the pinned [Skills CLI](https://github.com/vercel-labs/skills) version
-1.7.6 and copies this skill into the current project's directories for all agents
-supported by that CLI. It does not install globally or install Node/Git for you.
+1.7.6 and installs one shared copy under `.agents/skills/english-responses` by
+default, rather than creating folders for every supported agent. It does not
+install globally or install Node/Git for you. Tools that require a different skill
+directory can be selected explicitly with the installer's `-Agent` parameter.
 Some tools still require a skill reload or a new session before discovery.
 
 On machines with `D:\opencode_works`, npm downloads, temporary clones, and CLI
-state go to `D:\opencode_works\.english-responses-tools`. Otherwise they go to
+state go to `D:\opencode_works\english response repo\.english-responses-tools`. Otherwise they go to
 `.english-responses-tools` inside the project. Project skill files stay in the
 project, so run from a D: project if you want all new files on D:. The script
 restores its temporary environment settings after running and disables CLI
 telemetry for that invocation. You can inspect [install.ps1](install.ps1) before
 running it.
 
+When run from `D:\opencode_works` itself, the one-liner installs into the dedicated
+`D:\opencode_works\english response repo` folder instead of cluttering the projects
+parent. When run inside another project, skill files stay in that project.
+
+To select tools with agent-specific folders, run the downloaded script explicitly:
+
+```powershell
+.\install.ps1 -Project 'D:\opencode_works\your-project' -Agent universal,claude-code
+```
+
 For another OS or your own cache setup, the standard ecosystem command is:
 
 ```sh
-npx --yes skills@1.7.6 add Tavneet-18/english-responses --skill english-responses --agent '*' --yes --copy
+npx --yes skills@1.7.6 add Tavneet-18/english-responses --skill english-responses --agent universal --yes --copy
 ```
 
 That command uses npm's normal cache/temp locations; use the PowerShell installer
-above for the D: storage preference. `--agent '*'` installs to all CLI-supported
-agent directories, including directories for tools you may not have installed.
-To target fewer tools, replace it with your CLI-supported agent names. See the
+above for the D: storage preference. `--agent universal` uses the shared skill
+directory; replace it with your CLI-supported agent names where needed. Selecting
+`--agent '*'` explicitly creates directories for every supported tool. See the
 [supported agents](https://github.com/vercel-labs/skills/blob/main/docs/agents.md).
 
 After installing, tell the agent:
